@@ -15,13 +15,7 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Set SECRET_KEY in Vercel: Project -> Settings -> Environment Variables.
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
-if not app.config["SECRET_KEY"]:
-    raise RuntimeError(
-        "SECRET_KEY environment variable is missing. "
-        "Add it in your Vercel project settings and redeploy."
-    )
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "fallback-dev-key-change-me")
 
 # Use DATABASE_URL for PostgreSQL in production. SQLite is for local development.
 database_url = os.environ.get("DATABASE_URL", "sqlite:///blog.db")
@@ -32,7 +26,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB upload limit
 
-# Vercel's local filesystem is ephemeral. Use object storage for persistent uploads.
+# Upload folder configuration
 upload_folder = os.environ.get(
     "UPLOAD_FOLDER", str(Path(app.root_path) / "static" / "uploads")
 )
@@ -90,7 +84,62 @@ class Post(db.Model):
 
 ALLOWED_FILE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
-
 def allowed_file(filename):
-    return (
-        "." in filename
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_FILE_EXTENSIONS
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+@app.route("/")
+def index():
+    posts = Post.query.filter_by(status="published").order_by(Post.created_at.desc()).all()
+    return render_template("index.html", posts=posts)
+
+
+@app.route("/post/<slug>")
+def post_detail(slug):
+    post = Post.query.filter_by(slug=slug, status="published").first_or_404()
+    return render_template("post.html", post=post)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        admin = Admin.query.filter_by(username=username).first()
+        if admin and check_password_hash(admin.password_hash, password):
+            session["admin_id"] = admin.id
+            session["username"] = admin.username
+            flash("Logged in successfully.", "success")
+            return redirect(url_for("dashboard"))
+        flash("Invalid username or password.", "danger")
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully.", "info")
+    return redirect(url_for("index"))
+
+
+@app.route("/dashboard")
+def dashboard():
+    if "admin_id" not in session:
+        return redirect(url_for("login"))
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    return render_template("dashboard.html", posts=posts)
+
+
+# ---------------------------------------------------------------------------
+# Main Entry Point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
