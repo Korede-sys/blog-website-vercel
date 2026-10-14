@@ -14,9 +14,9 @@
                 <li><a href="{{ url_for('index') }}">Home</a></li>
                 {% if current_admin %}
                 <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('admin_logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
                 {% else %}
-                <li><a href="{{ url_for('admin_login') }}">Admin</a></li>
+                <li><a href="{{ url_for('login') }}">Admin</a></li>
                 {% endif %}
                 <li>
                     <button class="theme-toggle" onclick="toggleTheme()">
