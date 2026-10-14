@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.git/
+.gitignore
+README.md
+setup.sh
+setup.bat
+Dockerfile
+docker-compose.yml
+instance/*.db
+static/uploads/*
+!static/uploads/.gitkeep

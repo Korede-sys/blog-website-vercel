@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - My Blog{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>📊 Dashboard</h1>
+        <p>Welcome back, {{ current_admin.username }}!</p>
+    </div>
+    <a href="{{ url_for('admin_new_post') }}" class="btn btn-primary">+ New Post</a>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ posts|length }}</div>
+        <div class="stat-label">Total Posts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ published_count }}</div>
+        <div class="stat-label">Published</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ draft_count }}</div>
+        <div class="stat-label">Drafts</div>
+    </div>
+</div>
+
+<h2 style="margin-bottom: 1rem;">All Posts</h2>
+
+{% if posts %}
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for post in posts %}
+        <tr>
+            <td>
+                <strong>{{ post.title }}</strong>
+                {% if post.featured_image %}
+                <br><small style="color: var(--text-secondary);">📷 Has image</small>
+                {% endif %}
+            </td>
+            <td><span class="badge">{{ post.category }}</span></td>
+            <td>
+                {% if post.status == 'published' %}
+                <span style="color: var(--success);">✓ Published</span>
+                {% else %}
+                <span style="color: var(--warning);">✎ Draft</span>
+                {% endif %}
+            </td>
+            <td>{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                <a href="{{ url_for('admin_edit_post', post_id=post.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                {% if post.status == 'published' %}
+                <a href="{{ url_for('post', slug=post.slug) }}" class="btn btn-sm btn-secondary" target="_blank">View</a>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin_delete_post', post_id=post.id) }}" style="display: inline;" onsubmit="return confirmDelete(event, 'Delete this post permanently?')">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+    <h2>No posts yet</h2>
+    <p>Create your first post to get started!</p>
+    <a href="{{ url_for('admin_new_post') }}" class="btn btn-primary" style="margin-top: 1rem;">Create Post</a>
+</div>
+{% endif %}
+{% endblock %}

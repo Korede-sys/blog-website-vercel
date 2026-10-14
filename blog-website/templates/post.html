@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - My Blog{% endblock %}
+
+{% block content %}
+<article class="post-full">
+    {% if post.featured_image %}
+    <img src="{{ url_for('static', filename='uploads/' + post.featured_image) }}" alt="{{ post.title }}" class="featured-image">
+    {% endif %}
+
+    <h1>{{ post.title }}</h1>
+
+    <div class="post-meta">
+        <span>📅 {{ post.created_at.strftime('%B %d, %Y') }}</span>
+        <span> | 📂 {{ post.category }}</span>
+        {% if post.tags %}
+        <span> | 🏷️ {{ post.tags }}</span>
+        {% endif %}
+        {% if post.updated_at != post.created_at %}
+        <span> | 🔄 Updated: {{ post.updated_at.strftime('%B %d, %Y') }}</span>
+        {% endif %}
+    </div>
+
+    <div class="post-content">
+        {{ post.content | safe | replace('\n', '<br>') }}
+    </div>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border-color);">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">← Back to Home</a>
+    </div>
+</article>
+{% endblock %}
