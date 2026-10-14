@@ -139,6 +139,16 @@ def dashboard():
     return render_template("dashboard.html", posts=posts)
 
 
+@app.route("/search")
+def search():
+    query = request.args.get("q", "")
+    posts = Post.query.filter(
+        (Post.title.contains(query) | Post.content.contains(query)) & 
+        (Post.status == "published")
+    ).all()
+    return render_template("index.html", posts=posts, query=query)
+
+
 # ---------------------------------------------------------------------------
 # Main Entry Point
 # ---------------------------------------------------------------------------
